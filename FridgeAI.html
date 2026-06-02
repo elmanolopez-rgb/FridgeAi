@@ -269,6 +269,14 @@
   ::-webkit-scrollbar-track { background:transparent; }
   ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
 
+  .apikey-screen { background:var(--bg); padding:32px 28px; overflow-y:auto; }
+  .apikey-steps { background:var(--surface); border-radius:var(--card-radius); padding:18px; margin-bottom:20px; border:1px solid var(--border); }
+  .apikey-step { display:flex; gap:12px; align-items:flex-start; margin-bottom:12px; }
+  .apikey-step:last-child { margin-bottom:0; }
+  .apikey-step-num { width:24px; height:24px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; margin-top:1px; }
+  .apikey-step-text { font-size:13px; color:var(--text2); line-height:1.5; }
+  .apikey-input-wrap { position:relative; margin-bottom:8px; }
+  .apikey-toggle-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; font-size:18px; cursor:pointer; color:var(--text3); }
   .install-banner { background:linear-gradient(135deg, var(--accent) 0%, #d45020 100%); border-radius:16px; padding:14px 16px; margin:0 20px 16px; display:flex; align-items:center; gap:12px; cursor:pointer; display:none; }
   .install-banner.visible { display:flex; }
   .install-banner-text { flex:1; }
@@ -350,6 +358,50 @@
     <button class="btn-primary" onclick="handleRegister()">Crear Perfil →</button>
   </div>
   <div class="auth-divider">🔒 Tus datos se guardan de forma segura</div>
+</div>
+
+<!-- API KEY SCREEN -->
+<div class="screen apikey-screen" id="apikey-screen">
+  <div style="text-align:center;margin-bottom:28px">
+    <div style="font-size:52px;margin-bottom:12px">🔑</div>
+    <div style="font-family:'Fraunces',serif;font-size:26px;color:var(--primary);margin-bottom:8px">Configura tu IA</div>
+    <div style="font-size:14px;color:var(--text2);line-height:1.6">Solo necesitas hacer esto una vez.<br>Tu clave se guarda en tu dispositivo.</div>
+  </div>
+
+  <div class="apikey-steps">
+    <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">📋 Cómo obtener tu clave gratis:</div>
+    <div class="apikey-step">
+      <div class="apikey-step-num">1</div>
+      <div class="apikey-step-text">Ve a <strong>console.anthropic.com</strong> y crea una cuenta gratis</div>
+    </div>
+    <div class="apikey-step">
+      <div class="apikey-step-num">2</div>
+      <div class="apikey-step-text">Haz clic en <strong>"API Keys"</strong> en el menú izquierdo</div>
+    </div>
+    <div class="apikey-step">
+      <div class="apikey-step-num">3</div>
+      <div class="apikey-step-text">Clic en <strong>"Create Key"</strong>, ponle un nombre y cópiala</div>
+    </div>
+    <div class="apikey-step">
+      <div class="apikey-step-num">4</div>
+      <div class="apikey-step-text">Pega la clave abajo (empieza con <strong>sk-ant-...</strong>)</div>
+    </div>
+  </div>
+
+  <div id="apikey-error" class="error-msg"></div>
+
+  <div class="form-group">
+    <label class="form-label">Tu clave API de Anthropic</label>
+    <div class="apikey-input-wrap">
+      <input type="password" class="form-input" id="apikey-input" placeholder="sk-ant-api03-..." style="padding-right:44px">
+      <button class="apikey-toggle-btn" onclick="toggleApiKeyVisibility()">👁️</button>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:16px">🔒 Tu clave se guarda solo en este dispositivo y nunca se comparte</div>
+  <button class="btn-primary" onclick="saveApiKey()">Guardar y continuar →</button>
+  <div style="text-align:center;margin-top:16px">
+    <button style="background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif" onclick="skipApiKey()">Saltar por ahora (sin IA)</button>
+  </div>
 </div>
 
 <!-- MAIN APP -->
@@ -534,6 +586,12 @@
       </div>
 
       <div class="settings-group">
+        <div class="settings-item" onclick="openApiKeyModal()">
+          <div class="settings-icon">🔑</div>
+          <div class="settings-label">Clave API (IA)</div>
+          <div class="settings-value" id="apikey-status">No configurada</div>
+          <div class="settings-arrow">›</div>
+        </div>
         <div class="settings-item" onclick="clearFridge()">
           <div class="settings-icon">🗑️</div>
           <div class="settings-label">Limpiar refrigeradora</div>
@@ -608,6 +666,24 @@
       <button class="dietary-chip" data-val="keto" onclick="setDietary('keto','Keto',this)">🥑 Keto</button>
     </div>
     <button class="btn-primary" onclick="closeModal('dietary-modal')">Guardar</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="apikey-modal" onclick="closeModalOutside(event,'apikey-modal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔑 Clave API</div>
+    <div class="modal-sub">Cambia o actualiza tu clave de Anthropic</div>
+    <div class="form-group">
+      <label class="form-label">Clave API de Anthropic</label>
+      <div class="apikey-input-wrap">
+        <input type="password" class="form-input" id="apikey-modal-input" placeholder="sk-ant-api03-..." style="padding-right:44px">
+        <button class="apikey-toggle-btn" onclick="toggleApiKeyVisibilityModal()">👁️</button>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:16px">🔒 Se guarda solo en este dispositivo</div>
+    <button class="btn-primary" onclick="saveApiKeyFromModal()">Guardar clave</button>
+    <button class="btn-full btn-outline" style="margin-top:10px" onclick="clearApiKey()">🗑️ Eliminar clave</button>
   </div>
 </div>
 
@@ -729,14 +805,92 @@ function loginUser(email) {
   document.getElementById('goal-display').textContent = {balanced:'Balanceado',lose:'Bajar peso',gain:'Ganar músculo',maintain:'Mantener',health:'Salud general'}[u.goal]||'Balanceado';
   document.getElementById('dietary-display').textContent = {none:'Ninguna',vegetarian:'Vegetariana',vegan:'Vegana','gluten-free':'Sin gluten','lactose-free':'Sin lactosa',diabetic:'Diabético'}[u.dietary]||'Ninguna';
   document.getElementById('auth-screen').classList.remove('active');
-  document.getElementById('app-screen').classList.add('active');
-  renderFridge(); renderShopping(); updateStats();
+  if(!getApiKey()) {
+    document.getElementById('apikey-screen').classList.add('active');
+  } else {
+    document.getElementById('app-screen').classList.add('active');
+    renderFridge(); renderShopping(); updateStats(); updateApiKeyStatus();
+  }
 }
 
 function handleLogout() {
   state.user = null; save();
   document.getElementById('app-screen').classList.remove('active');
   document.getElementById('auth-screen').classList.add('active');
+}
+
+// ===== API KEY =====
+function getApiKey() { return localStorage.getItem('fridgeai_apikey')||''; }
+
+function updateApiKeyStatus() {
+  const key = getApiKey();
+  const el = document.getElementById('apikey-status');
+  if(el) el.textContent = key ? '✅ Configurada' : 'No configurada';
+}
+
+function toggleApiKeyVisibility() {
+  const inp = document.getElementById('apikey-input');
+  inp.type = inp.type==='password'?'text':'password';
+}
+function toggleApiKeyVisibilityModal() {
+  const inp = document.getElementById('apikey-modal-input');
+  inp.type = inp.type==='password'?'text':'password';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apikey-input').value.trim();
+  const errEl = document.getElementById('apikey-error');
+  if(!key) { errEl.textContent='Ingresa tu clave API'; errEl.style.display='block'; return; }
+  if(!key.startsWith('sk-ant-')) { errEl.textContent='La clave debe empezar con sk-ant-...'; errEl.style.display='block'; return; }
+  localStorage.setItem('fridgeai_apikey', key);
+  errEl.style.display='none';
+  document.getElementById('apikey-screen').classList.remove('active');
+  document.getElementById('app-screen').classList.add('active');
+  updateApiKeyStatus();
+  renderFridge(); renderShopping(); updateStats();
+}
+
+function skipApiKey() {
+  document.getElementById('apikey-screen').classList.remove('active');
+  document.getElementById('app-screen').classList.add('active');
+  renderFridge(); renderShopping(); updateStats();
+}
+
+function saveApiKeyFromModal() {
+  const key = document.getElementById('apikey-modal-input').value.trim();
+  if(!key||!key.startsWith('sk-ant-')) { alert('Clave inválida. Debe empezar con sk-ant-...'); return; }
+  localStorage.setItem('fridgeai_apikey', key);
+  closeModal('apikey-modal');
+  updateApiKeyStatus();
+  alert('✅ Clave API guardada correctamente');
+}
+
+function clearApiKey() {
+  if(confirm('¿Eliminar tu clave API? La IA dejará de funcionar.')) {
+    localStorage.removeItem('fridgeai_apikey');
+    closeModal('apikey-modal');
+    updateApiKeyStatus();
+  }
+}
+
+function openApiKeyModal() {
+  const key = getApiKey();
+  if(key) document.getElementById('apikey-modal-input').value = key;
+  document.getElementById('apikey-modal').classList.add('open');
+}
+
+function apiFetch(body) {
+  const key = getApiKey();
+  if(!key) {
+    alert('⚠️ Necesitas configurar tu clave API primero.\n\nVe a Perfil → Clave API para agregarla.');
+    switchTab('profile');
+    return null;
+  }
+  return fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body: JSON.stringify(body)
+  });
 }
 
 // ===== TABS =====
@@ -842,11 +996,9 @@ Crea una receta detallada. Responde SOLO en JSON sin ningún texto adicional, si
 }`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1500, messages:[{role:'user',content:prompt}] })
-    });
+    const fetchCall = apiFetch({ model:'claude-sonnet-4-20250514', max_tokens:1500, messages:[{role:'user',content:prompt}] });
+    if(!fetchCall) { document.getElementById('recipe-loading').style.display='none'; return; }
+    const res = await fetchCall;
     const data = await res.json();
     const text = data.content?.map(c=>c.text||'').join('').trim();
     const clean = text.replace(/```json\n?|```\n?/g,'').trim();
@@ -1000,11 +1152,9 @@ async function sendChat() {
   appendTyping();
   try {
     const systemPrompt = `Eres FridgeAI, un asistente experto en cocina, nutrición y salud. Responde en español de forma amigable, concisa y útil. ${userCtx} ${fridgeCtx} Cuando des información nutricional, sé específico con valores. Cuando des recetas, sé práctico. Máximo 200 palabras por respuesta.`;
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,system:systemPrompt,messages:state.chatHistory})
-    });
+    const fetchCall = apiFetch({model:'claude-sonnet-4-20250514',max_tokens:400,system:systemPrompt,messages:state.chatHistory});
+    if(!fetchCall) { removeTyping(); return; }
+    const res = await fetchCall;
     const data = await res.json();
     const reply = data.content?.map(c=>c.text||'').join('')||'Lo siento, no pude procesar tu mensaje.';
     state.chatHistory.push({role:'assistant',content:reply});
@@ -1118,6 +1268,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(()=>document.getElementById('splash').style.display='none',500);
     if(state.user&&state.users[state.user]) {
       loginUser(state.user);
+      updateApiKeyStatus();
     } else {
       document.getElementById('auth-screen').classList.add('active');
     }
